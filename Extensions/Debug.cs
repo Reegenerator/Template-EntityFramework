@@ -4,12 +4,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows;
+using System.Windows.Input;
 using Kodeo.Reegenerator.Generators;
 using Microsoft.VisualBasic;
 using Microsoft.VisualBasic.CompilerServices;
 using Debugger = System.Diagnostics.Debugger;
 
-namespace RgenLib.Extensions { 
+namespace RgenLib.Extensions {
     public static class Debug {
 
         #region Debug helpers
@@ -40,7 +42,6 @@ namespace RgenLib.Extensions {
         /// <returns></returns>
         /// <remarks></remarks>
         public static IEnumerable<T> DebugMembers<T>(this IEnumerable list, string memberName) {
-            var sb = new List<T>();
             var res = from object x in list
                       select Versioned.CallByName(x, memberName, CallType.Get);
 
@@ -67,7 +68,6 @@ namespace RgenLib.Extensions {
         /// <returns></returns>
         /// <remarks></remarks>
         public static object DebugMembers(this IEnumerable list, string memberName, string secondMemberName) {
-            var sb = new List<string>();
             var res = from object x in list
                       select new {
                           Member1 = Versioned.CallByName(x, memberName, CallType.Get),
@@ -109,26 +109,55 @@ namespace RgenLib.Extensions {
 
         }
 
+        private static OutputPaneTraceListener _traceListener;
+        /// <summary>
+        /// Do not use this method ( OutputPaneTraceListener will not ready, and will throw an exception) within constructor, do it in PreRender or Render
+        /// </summary>
+        /// <param name="listener"></param>
+        static public void SetTraceListener(OutputPaneTraceListener listener) {
+         
+            if (_traceListener != null) {
+                if (MessageBox.Show("There's already a TraceListener, replace?",
+                        "Set default Reegenerator Template trace listener", MessageBoxButton.YesNo) !=
+                    MessageBoxResult.Yes) {
+                    return;
+                }
+            }
+            _traceListener = listener;
+        }
+
         private static bool DebugSkipped;
         /// <summary>
         /// Launch debugger or Break if it's already attached
         /// </summary>
         /// <remarks></remarks>
-        public static void DebugHere(Exception ex=null) {
-            if (Debugger.IsAttached) {
-                Debugger.Break();
+        public static void DebugHere(Exception ex = null) {
+            if (ex != null) {
+                //for resharper, copy exception
+                Clipboard.SetText(ex.ToString());
+                if (_traceListener != null) {
+                   _traceListener.WriteLine(ex.ToString());
+                }
             }
-            else {
-                //If debug is cancelled once, stop trying to launch
-                if (DebugSkipped) {
-                    return;
-                }
-                var launched = Debugger.Launch();
-                if (!launched) {
-                    DebugSkipped = true;
-                }
+            //if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift)) {
+            //    //don't break or launch if shift is held down
+            //    return;
+            //}
+            //if (Debugger.IsAttached) {
+            //    Debugger.Break();
+            //}
+            //else {
+            //    //If debug is cancelled once, stop trying to launch
+            //    if (DebugSkipped) {
+            //        return;
+            //    }
+            //    var launched = Debugger.Launch();
+            //    if (!launched) {
+            //        DebugSkipped = true;
+            //    }
 
-            }
+            //}
+
         }
         #endregion
 

@@ -108,6 +108,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CodeRendererEx.cs" />
+    <Compile Include="Extensions\CodeRenderer.cs" />
     <Compile Include="Extensions\Debug.cs" />
     <Compile Include="Extensions\ElementAtCursor.cs" />
     <Compile Include="Extensions\General.cs" />
@@ -119,9 +121,11 @@
     <Compile Include="TaggedCodeRenderer.cs" />
     <Compile Include="TaggedSegment\CodeClassJsonConverter.cs" />
     <Compile Include="TaggedSegment\GeneratedSegment.cs" />
-    <Compile Include="TaggedSegment\Json\EnumConverter.cs" />
-    <Compile Include="TaggedSegment\Json\OrderedSerializerSettings.cs" />
-    <Compile Include="TaggedSegment\Json\TagWrapper.cs" />
+    <Compile Include="TaggedSegment\Json\NullDefaultEnumConverter.cs" />
+    <Compile Include="TaggedSegment\Json\OrderedContractResolver.cs" />
+    <Compile Include="TaggedSegment\RegenModes.cs" />
+    <Compile Include="TaggedSegment\TagFormat.cs" />
+    <Compile Include="TaggedSegment\TaggedRange.cs" />
     <Compile Include="TaggedSegment\Json\VersionConverter.cs" />
     <Compile Include="TaggedSegment\OptionTag.cs" />
     <Compile Include="TaggedSegment\Constants.cs" />
@@ -166,9 +170,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RgenLib.Attributes\RgenLib.Attributes.csproj">
-      <Project>{07c4ae0f-b6a5-45fc-982c-e4ec2c0b6661}</Project>
-      <Name>RgenLib.Attributes</Name>
+    <ProjectReference Include="..\Attributes\Attributes.csproj">
+      <Project>{1CF4996B-DA27-476A-9951-105241589F9C}</Project>
+      <Name>Attributes</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

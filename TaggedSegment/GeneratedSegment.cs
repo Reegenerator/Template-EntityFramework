@@ -4,13 +4,14 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using EnvDTE;
 using Newtonsoft.Json;
 using RgenLib.Extensions;
-using RgenLib.TaggedSegment.Json;
+using TextPoint = EnvDTE.TextPoint;
 
 namespace RgenLib.TaggedSegment {
-    public partial class Manager<T> where T : TaggedCodeRenderer, new() {
+    public partial class Manager<TRenderer, TOptionAttr>
+        where TRenderer : TaggedCodeRenderer, new()
+        where TOptionAttr : Attribute, new() {
         public class GeneratedSegment : Tag {
 
             static GeneratedSegment() {
@@ -43,8 +44,8 @@ namespace RgenLib.TaggedSegment {
 
             }
 
-            public bool IsAnyOutdated(Writer info) {
-                var segments = Find(info);
+            static public bool IsAnyOutdated(Writer info) {
+                var segments = Find(info.TargetRange, info.OptionTag.Category);
                 return !segments.Any() || segments.Any(x => x.IsOutdated(info.OptionTag));
             }
 
@@ -52,11 +53,12 @@ namespace RgenLib.TaggedSegment {
             public const string RegionBeginKeyword = "#region";
             public const string RegionEndKeyword = "#endregion";
 
+
             // ReSharper disable StaticFieldInGenericType
             private static Dictionary<TagFormat, Dictionary<SegmentTypes, Regex>> _regexDict;
-  
 
-    
+
+
             static private void InitRegex() {
                 _regexDict = new Dictionary<TagFormat, Dictionary<SegmentTypes, Regex>>();
                 //initialize regex
@@ -76,19 +78,16 @@ namespace RgenLib.TaggedSegment {
                     )
                     \{4}(\r\n)?";
 
-                const string xmlCommentPatternFormat = @"
-                    (
-                    {3}(?<tag><{0}\s*{1}='{2}'\s*[^<>]*/>)
-                    )
-                    |           
-                    (
-                        {3}(?<tag><{0}\s*{1}='{2}'\s*
-                            [^<>]*#Match everything but tag symbols
-                            (?<!/)>)\s*#Match only > but not />
-                        (?<content>.*?)(?<!</{0}>)
-                        {3}(?<tagend></Gen>)\s*
-                    )";
-
+                const string xmlCommentPairPatternFormat = @"
+                    {3}(?<xml><{0}\s*{1}='{2}'\s*
+                        [^<>]*#Match everything but tag symbols
+                        (?<!/)>)\s*#Match only > but not />
+                    (?<content>.*?)(?<!</{0}>)
+                    {3}(?<tagend></{0}>)\s*
+                    ";
+                const string xmlSingleCommentPatternFormat = @"
+                    {3}(?<xml><{0}\s*{1}='{2}'\s*[^<>]*/>)
+                    ";
                 //quotes are doubled to escape them inside literal string
                 //curly braces are doubled to escape them for string.format
                 const string jsonRegionPatternFormat = @"
@@ -107,18 +106,29 @@ namespace RgenLib.TaggedSegment {
         
                             )
                             \{4}(\r\n)?";
-
-                var rendererAttr = TagPrototype.Attribute(XmlRendererAttributeName);
+                const string jsonSingleCommentPatternFormat = @"
+                    [^\S\r\n]* #match tabs/space, but not newline, before tag
+                    //(?<textinfo>[^\r\n]*?)
+                    {0}\s*?:\s*?(?<json>\{{\s*?{1}\s*?:\s*?""{2}""[^\r\n]*\}})
+                    ";
+                var rendererAttr = TagPrototype.Attribute(TemplateNamePropertyName);
                 var tagName = TagPrototype.Name.LocalName;
 
-                var templateName = typeof(T).Name;
+                var templateName = typeof(TRenderer).Name;
                 _regexDict.Add(TagFormat.Xml, new Dictionary<SegmentTypes, Regex>());
-                var xmlCommentPattern = string.Format(xmlCommentPatternFormat, tagName, rendererAttr.Name, rendererAttr.Value, Constants.CodeCommentPrefix);
-                _regexDict[TagFormat.Xml].Add(SegmentTypes.Statements,
-                    new Regex(xmlCommentPattern, Constants.DefaultRegexOption));
+
+                //xml, comment pair 
+                var xmlCommentPairPattern = string.Format(xmlCommentPairPatternFormat, tagName, rendererAttr.Name, rendererAttr.Value, Constants.CodeCommentPrefix);
+                _regexDict[TagFormat.Xml].Add(SegmentTypes.CommentPair,  new Regex(xmlCommentPairPattern, Constants.DefaultRegexOption));
+                //xml, single line comment
+                var xmlSingleCommentPattern = string.Format(xmlSingleCommentPatternFormat, tagName, rendererAttr.Name, rendererAttr.Value, Constants.CodeCommentPrefix);
+                _regexDict[TagFormat.Xml].Add(SegmentTypes.SingleLineComment, new Regex(xmlSingleCommentPattern, Constants.DefaultRegexOption));
+
+                //xml , region
                 var xmlRegPattern = string.Format(xmlRegionPatternFormat, tagName, rendererAttr.Name, rendererAttr.Value, RegionBeginKeyword, RegionEndKeyword);
                 _regexDict[TagFormat.Xml].Add(SegmentTypes.Region, new Regex(xmlRegPattern, Constants.DefaultRegexOption));
 
+                //json, region
                 _regexDict.Add(TagFormat.Json, new Dictionary<SegmentTypes, Regex>());
                 var jsonRegPattern = string.Format(jsonRegionPatternFormat,
                                                     Constants.JsonTagPrefix,
@@ -126,6 +136,16 @@ namespace RgenLib.TaggedSegment {
                                                     templateName,
                                                     RegionBeginKeyword, RegionEndKeyword);
                 _regexDict[TagFormat.Json].Add(SegmentTypes.Region, new Regex(jsonRegPattern, Constants.DefaultRegexOption));
+
+                //json, single comment
+
+                var jsonSingleCommentPattern = string.Format(jsonSingleCommentPatternFormat,
+                                                    Constants.JsonTagPrefix,
+                                                    TemplateNamePropertyName,
+                                                    templateName);
+                _regexDict[TagFormat.Json].Add(SegmentTypes.SingleLineComment, new Regex(jsonSingleCommentPattern, Constants.DefaultRegexOption));
+
+
             }
             #endregion
 
@@ -138,21 +158,23 @@ namespace RgenLib.TaggedSegment {
             /// <returns></returns>
             /// <remarks>
             /// </remarks>
-            public static XElement ExtractXml(TextRange range) {
+            public static XElement ExtractXml(Match match, SegmentTypes segType) {
 
-                var firstline = range.StartPoint.CreateEditPoint().GetLineText();
-                var segmentType = firstline.Trim().StartsWith(RegionBeginKeyword) ? SegmentTypes.Region : SegmentTypes.Statements;
-                var text = range.GetText();
+                //var firstline = range.StartPoint.CreateEditPoint().GetLineText();
+                //var segmentType = firstline.Trim().StartsWith(RegionBeginKeyword) ? SegmentTypes.Region : SegmentTypes.CommentPair;
+                //var text = range.GetText();
                 var xmlContent = "";
-                switch (segmentType) {
+                switch (segType) {
                     case SegmentTypes.Region:
-                        xmlContent = _regexDict[TagFormat.Xml][SegmentTypes.Region].Replace(text, "${xml}");
+                    case SegmentTypes.SingleLineComment:
+
+                        xmlContent = match.Result("${xml}");
                         break;
-                    case SegmentTypes.Statements:
-                        xmlContent = _regexDict[TagFormat.Xml][SegmentTypes.Statements].Replace(text, "${tag}${content}${tagend}");
+                    case SegmentTypes.CommentPair:
+                        xmlContent = match.Result("${tag}${content}${tagend}");
                         break;
                 }
-
+                if (xmlContent == "") Debug.DebugHere();
                 return XDocument.Parse(xmlContent).Root;
             }
             /// <summary>
@@ -161,99 +183,35 @@ namespace RgenLib.TaggedSegment {
             /// <returns></returns>
             /// <remarks>
             /// </remarks>
-            public static string ExtractJson(TextRange range) {
+            public static string ExtractJson(Match match) {
 
-                var firstline = range.StartPoint.CreateEditPoint().GetLineText();
-                var segmentType = firstline.Trim().StartsWith(RegionBeginKeyword) ? SegmentTypes.Region : SegmentTypes.Statements;
-                var text = range.GetText();
-                var json = "";
-                switch (segmentType) {
-                    case SegmentTypes.Region:
-                        json = _regexDict[TagFormat.Json][SegmentTypes.Region].Replace(text, "${json}");
-                        break;
-                    //case SegmentTypes.Statements:
-                    //    json = XmlCommentRegex.Replace(text, "${tag}${content}${tagend}");
-                    //    break;
-                }
+                var json = match.Result("${json}");
 
                 return json;
 
             }
-            /// <summary>
-            /// Parse Attribute Argument into the actual string value
-            /// </summary>
-            /// <param name="propInfo"></param>
-            /// <param name="value"></param>
-            /// <remarks>
-            /// Attribute argument is presented exactly as it was typed
-            /// Ex: SomeArg="Test" would result in the Argument.Value "Test" (with quote)
-            /// Ex: SomeArg=("Test") would result in the Argument.Value ("Test") (with parentheses and quote)
-            /// </remarks>
-            private static object ParseXmlAttributeValue(PropertyInfo propInfo, string value) {
-                //Debug.DebugHere();
-
-                object parsed;
-                var propType = propInfo.PropertyType;
-                if (propType.IsEnum) {
-                    //if enum, remove the Enum qualifier (e.g TagTypes.InsertPoint => InserPoint)
-                    parsed = Enum.Parse(typeof(RegenModes), value);
-                }
-                else if (propType == typeof(DateTime) || propType == typeof(DateTime?)) {
-                    parsed = DateTime.ParseExact(value, Constants.TagDateFormat, Constants.TagDateCulture);
-                }
-                else if (propType == typeof(string)) {
-                    //remove quotes
-                    parsed = value.Trim('\"');
-                }
-
-                else {
-                    parsed = value;
-                }
-                return parsed;
-            }
 
 
-            private static GeneratedSegment ParseJson(TextRange range) {
-                var tag = new GeneratedSegment(range);
-                var json = ExtractJson(range);
-                JsonConvert.PopulateObject(json, tag);
-                return tag;
-            }
-            private static GeneratedSegment ParseTextRange(TextRange range, TagFormat tagFormat) {
+
+
+            private static void PopulateSegmentWithXml(GeneratedSegment tag, XElement xTag) {
+         
                 try {
-                    switch (tagFormat) {
-                        case TagFormat.Json:
-                            return ParseJson(range);
-                        case TagFormat.Xml:
-                            return ParseXml(range);
-                    }
-                }
-                catch (Exception ex) {
-
-                    Debug.DebugHere(ex);
-                    throw;
-                }
-                return null;
-            }
-            private static GeneratedSegment ParseXml(TextRange range) {
-                try {
-                    var tag = new GeneratedSegment(range);
                     var xmlProps = XmlAttributeAttribute.GetXmlProperties(typeof(GeneratedSegment));
-                    var xTag = ExtractXml(range);
                     foreach (var attr in xTag.Attributes()) {
-                        var name = attr.Name.LocalName;
+                        var name  = attr.Name.LocalName;
 
 
                         //skip renderer name
-                        if (name == XmlRendererAttributeName) {
+                        if (name == TemplateNamePropertyName) {
                             continue;
                         }
 
                         var prop = xmlProps[name];
-                        prop.SetValue(tag, ParseXmlAttributeValue(prop, attr.Value));
+                        var value = XmlAttributeAttribute.ParsePropertyValue(prop, attr.Value);
+                        prop.SetValue(tag, value);
 
                     }
-                    return tag;
                 }
                 catch (Exception ex) {
 
@@ -271,21 +229,30 @@ namespace RgenLib.TaggedSegment {
             /// <summary>
             /// Find textPoint marked with '<code>'<Gen Type="InsertPoint" /></code>
             /// </summary>
-            /// <param name="writer"></param>
             /// <returns></returns>
             /// <remarks>
             /// </remarks>
-            static public GeneratedSegment FindInsertionPoint(Writer writer) {
-
-                return Find(writer, TagTypes.InsertPoint).FirstOrDefault();
+            static public GeneratedSegment FindInsertionPoint(TaggedRange range) {
+                //insertion points are always single comment, override the writer info
+                var copy = range.Clone();
+                copy.SegmentType = SegmentTypes.SingleLineComment;
+                return Find(copy, TagTypes.InsertPoint).FirstOrDefault();
             }
-            static public GeneratedSegment[] Find(Writer writer) {
+            static public GeneratedSegment[] Find(TaggedRange range, string category) {
 
-                return Find(writer, TagTypes.Generated).Where(x => x.Category == writer.OptionTag.Category).ToArray();
+                return Find(range, TagTypes.Generated).Where(x => x.Category == category).ToArray();
 
             }
-            static public IEnumerable<GeneratedSegment> Find(Writer writer, TagTypes tagType) {
-                return FindSegments(writer).Where(x => x.TagType == tagType);
+            static public IEnumerable<GeneratedSegment> Find(TaggedRange range, TagTypes tagType) {
+                return FindSegments(range).Where(x => x.TagType == tagType);
+            }
+
+            static public TextRange ConvertRegexMatchToTextRange(Match m, TextPoint startPoint) {
+                var matchStart = startPoint.CreateEditPoint();
+                matchStart.CharRightExact(m.Index);
+                var matchEnd = matchStart.CreateEditPoint();
+                matchEnd.CharRightExact(m.Length);
+                return new TextRange(matchStart, matchEnd);
             }
 
             /// <summary>
@@ -296,34 +263,42 @@ namespace RgenLib.TaggedSegment {
             /// Not using EditPoint.FindPattern because it can only search from startpoint to end of doc, no way to limit to selection
             /// Not using DTE Find because it has to change params of current find dialog, might screw up normal find usage
             ///  </remarks>
-            static public GeneratedSegment[] FindSegments(Writer writer) {
+            static public GeneratedSegment[] FindSegments(TaggedRange searchRange) {
+                try {
+                    var regex = _regexDict[searchRange.TagFormat][searchRange.SegmentType];
+                    var searchText = searchRange.GetText();
+                    var matches = regex.Matches(searchText);
+                    var segments = new List<GeneratedSegment>();
+                    foreach (var m in matches.Cast<Match>()) {
+                        var matchRange = ConvertRegexMatchToTextRange(m, searchRange.StartPoint);
+                        var segment = new GeneratedSegment(matchRange);
+                        switch (searchRange.TagFormat) {
+                            case TagFormat.Json:
+                                var json = ExtractJson(m);
+                                try {
+                                    JsonConvert.PopulateObject(json, segment);
 
-                var regex = _regexDict[writer.TagFormat][writer.SegmentType];
-                //Using regex in FindPattern does
-                var text = writer.GetSearchText();
-                var matches = regex.Matches(text);
-                var segments = new List<GeneratedSegment>();
-                foreach (var m in matches.Cast<Match>()) {
-                    EditPoint matchStart = null;
-                    EditPoint matchEnd = null;
-
-                    if (m.Success) {
-                        //Convert match into start and end TextPoints
-                        matchStart = writer.SearchStart.CreateEditPoint();
-                        matchStart.CharRightExact(m.Index);
-                        matchEnd = matchStart.CreateEditPoint();
-                        matchEnd.CharRightExact(m.Length);
-
+                                }
+                                catch (Exception e) {
+                                    Debug.DebugHere(e);
+                                    throw;
+                                }
+                                break;
+                            case TagFormat.Xml:
+                                var x = ExtractXml(m, searchRange.SegmentType);
+                                PopulateSegmentWithXml(segment, x);
+                                break;
+                        }
+                        segments.Add(segment);
                     }
-
-                    var range = new TextRange(matchStart, matchEnd);
-                    if (range.IsValid) {
-                        var tag = ParseTextRange(range, writer.Manager.TagFormat);
-                        segments.Add(tag);
-                    }
+                    return segments.ToArray();
                 }
-                return segments.ToArray();
+                catch (Exception e) {
+                    Debug.DebugHere(e);
+                    throw;
+                }
             }
+
 
 
 
