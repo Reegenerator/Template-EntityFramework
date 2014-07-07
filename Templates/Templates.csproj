@@ -60,9 +60,22 @@
     <Reference Include="EnvDTE80" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseclassSelectionChangedArgs.cs" />
+    <Compile Include="DbSet.Designer.cs">
+      <DependentUpon>DbSet.rgt</DependentUpon>
+    </Compile>
+    <Compile Include="DbSet.rgt.cs">
+      <DependentUpon>DbSet.rgt</DependentUpon>
+    </Compile>
+    <Compile Include="DbsetCandidate.cs" />
+    <Compile Include="DbSetDialog.cs" />
+    <Compile Include="DbSetDialog.Designer.cs">
+      <DependentUpon>DbSetDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="DbSet.rgt" />
     <None Include="Kodeo.Reegenerator.dll" />
   </ItemGroup>
   <ItemGroup>
@@ -89,6 +102,11 @@
       <ProductName>Windows Installer 4.5</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DbSetDialog.resx">
+      <DependentUpon>DbSetDialog.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
