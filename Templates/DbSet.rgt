@@ -1,4 +1,5 @@
 <%@ Template Language="C#" 
+			ParentClass="RgenLib.TaggedCodeRenderer"
             ClassName="DbSet" 
             DisplayName="DbSet" 
             Description="DbSet" %>
@@ -6,9 +7,28 @@
 <%@ Import Namespace="System.Linq" %>
 <%@ Import Namespace="System.Collections.Generic" %>
 <%@ Import Namespace="EnvDTE80" %>
+
 <%@ Method Name="GenDbset" DefineOutputParameter="True" %>
 <%@ Parameter Name="candidates" Type="IEnumerable<DbsetCandidate>" %>
 <% foreach(var c in candidates){%>
 public DbSet<<%= c.Class.FullName %>> <%=c.SetName %>{get;set;}
 <% }%>
+<%/ Method %>
+
+<%@ Method Name="GenGetbytype" DefineOutputParameter="True" %>
+<%@ Parameter Name="sets" Type="IEnumerable<CodeProperty2>" %>
+
+     public DbSet GetDbset<TEntity>() where TEntity : class
+        {
+            return GetDbset(typeof (TEntity));
+        }
+    public DbSet GetDbset(Type entityType)
+    {
+		<% foreach(var c in sets){%>
+		if (entityType == typeof(<%=GetDbsetGenericParameter( c.Type) %>)) return <%= c.Name %>;
+		<% } %>
+        return null;
+
+    }
+
 <%/ Method %>

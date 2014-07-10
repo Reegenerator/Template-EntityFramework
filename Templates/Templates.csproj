@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Templates</RootNamespace>
     <AssemblyName>Templates</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <OldToolsVersion>2.0</OldToolsVersion>
@@ -30,6 +30,7 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -39,6 +40,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -47,36 +49,80 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="EntityFramework">
+      <HintPath>..\packages\EntityFramework.6.1.0\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer">
+      <HintPath>..\packages\EntityFramework.6.1.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
     <Reference Include="Kodeo.Reegenerator, Version=2.0.6.0, Culture=neutral, PublicKeyToken=07b809f3a6579266, processorArchitecture=MSIL">
       <Private>False</Private>
     </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework">
+      <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\PresentationFramework.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Data" />
     <Reference Include="EnvDTE" />
     <Reference Include="EnvDTE80" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="Xceed.Wpf.AvalonDock">
+      <HintPath>..\packages\Extended.Wpf.Toolkit.2.2.0\lib\net40\Xceed.Wpf.AvalonDock.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.Aero">
+      <HintPath>..\packages\Extended.Wpf.Toolkit.2.2.0\lib\net40\Xceed.Wpf.AvalonDock.Themes.Aero.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.Metro">
+      <HintPath>..\packages\Extended.Wpf.Toolkit.2.2.0\lib\net40\Xceed.Wpf.AvalonDock.Themes.Metro.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.VS2010">
+      <HintPath>..\packages\Extended.Wpf.Toolkit.2.2.0\lib\net40\Xceed.Wpf.AvalonDock.Themes.VS2010.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.DataGrid">
+      <HintPath>..\packages\Extended.Wpf.Toolkit.2.2.0\lib\net40\Xceed.Wpf.DataGrid.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.Toolkit">
+      <HintPath>..\packages\Extended.Wpf.Toolkit.2.2.0\lib\net40\Xceed.Wpf.Toolkit.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseclassSelectionChangedArgs.cs" />
-    <Compile Include="DbSet.Designer.cs">
-      <DependentUpon>DbSet.rgt</DependentUpon>
-    </Compile>
     <Compile Include="DbSet.rgt.cs">
       <DependentUpon>DbSet.rgt</DependentUpon>
     </Compile>
-    <Compile Include="DbsetCandidate.cs" />
-    <Compile Include="DbSetDialog.cs" />
-    <Compile Include="DbSetDialog.Designer.cs">
-      <DependentUpon>DbSetDialog.cs</DependentUpon>
+    <Compile Include="DbSet1.Designer.cs">
+      <DependentUpon>DbSet.rgt</DependentUpon>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Include="DbsetCandidate.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DbsetDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DbsetDialog.Designer.cs">
+      <DependentUpon>DbsetDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="DbSet.rgt" />
+    <None Include="App.config" />
+    <None Include="DbSet.rgt">
+      <Generator>RgenTemplate</Generator>
+      <LastGenOutput>DbSet1.Designer.cs</LastGenOutput>
+    </None>
     <None Include="Kodeo.Reegenerator.dll" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Kodeo.Reegenerator.xml" />
@@ -104,8 +150,18 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="DbSetDialog.resx">
-      <DependentUpon>DbSetDialog.cs</DependentUpon>
+    <ProjectReference Include="..\..\ReegeneratorCollection\Attributes\Attributes.csproj">
+      <Project>{07c4ae0f-b6a5-45fc-982c-e4ec2c0b6661}</Project>
+      <Name>Attributes</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RgenLib\RgenLib.csproj">
+      <Project>{fa884bb3-23d7-495c-a246-364fb3b2a478}</Project>
+      <Name>RgenLib</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DbsetDialog.resx">
+      <DependentUpon>DbsetDialog.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

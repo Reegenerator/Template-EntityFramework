@@ -81,7 +81,14 @@ namespace RgenLib.TaggedSegment {
             //public TRenderer Renderer { get; set; }
 
             public TaggedRange TargetRange {
-                get { return _targetRange; }
+                get
+                {
+                    if (_targetRange == null)
+                    {
+                        throw new InvalidDataException("TargetRange has to be specified");
+                    }
+                    return _targetRange;
+                }
                 set {
                     _targetRange = value;
                     _targetRange.TagFormat = Manager.TagFormat;
