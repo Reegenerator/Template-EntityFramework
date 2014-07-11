@@ -153,7 +153,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ReegeneratorCollection\Attributes\Attributes.csproj">
+    <ProjectReference Include="..\Attributes\Attributes.csproj">
       <Project>{07c4ae0f-b6a5-45fc-982c-e4ec2c0b6661}</Project>
       <Name>Attributes</Name>
     </ProjectReference>
