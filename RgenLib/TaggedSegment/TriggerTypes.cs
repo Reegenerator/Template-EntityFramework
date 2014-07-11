@@ -4,7 +4,9 @@
     /// </summary>
     /// <remarks></remarks>
     public enum TriggerTypes {
+        Default,
 
+        Unset=Default,
         /// <summary>
         /// Code generation is triggered because the class is marked with a GeneratorAttribute 
         /// </summary>

@@ -37,7 +37,6 @@ namespace Templates {
             var classType = cls.ToType();
 
             var res = DbsetDialog.ShowDialog(this.ProjectItem, cls, GetExistingSetNames(cls));
-
             if (res == null) return null;
             WriteDbset(cls, res.Selection);
             if (res.IsGenGetbytype) WriteGetbytypeMethod(cls);
@@ -78,10 +77,13 @@ namespace Templates {
             var insertPoint = cls.GetStartPoint(vsCMPart.vsCMPartBody);
             var manager = new Manager<DbSet, GeneratorOptionAttribute>(TagFormat.Json);
             var writer = manager.CreateWriter(cls);
+            writer.OptionTag.Trigger.Type = TriggerTypes.CodeSnippet;
             writer.InsertStart = insertPoint;
             writer.TargetRange = new TaggedRange() {StartPoint = cls.StartPoint, EndPoint = cls.EndPoint};
             writer.Content = code;
+            writer.TagNote = "GetDbsetByType";
             writer.InsertOrReplace(true);
+
         }
 
         private void WriteDbset(CodeClass2 targetContext, IEnumerable<DbsetCandidate> selections)

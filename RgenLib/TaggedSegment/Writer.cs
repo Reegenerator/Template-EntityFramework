@@ -156,6 +156,7 @@ namespace RgenLib.TaggedSegment {
                 var serializer = new JsonSerializer { NullValueHandling = NullValueHandling.Ignore, ContractResolver = Tag.OrderedPropertyResolver };
                 var stringWriter = new StringWriter();
                 var writer = new JsonTextWriter(stringWriter) { QuoteName = false };
+                Debug.DebugHere();
                 serializer.Serialize(writer, OptionTag);
                 writer.Close();
                 var json = stringWriter.ToString();

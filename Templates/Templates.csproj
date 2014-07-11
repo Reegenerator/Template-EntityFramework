@@ -107,11 +107,8 @@
     <Compile Include="DbsetCandidate.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DbsetDialog.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="DbsetDialog.Designer.cs">
-      <DependentUpon>DbsetDialog.cs</DependentUpon>
+    <Compile Include="DbsetDialog.xaml.cs">
+      <DependentUpon>DbsetDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -150,6 +147,12 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="DbsetDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\ReegeneratorCollection\Attributes\Attributes.csproj">
       <Project>{07c4ae0f-b6a5-45fc-982c-e4ec2c0b6661}</Project>
       <Name>Attributes</Name>
@@ -158,11 +161,6 @@
       <Project>{fa884bb3-23d7-495c-a246-364fb3b2a478}</Project>
       <Name>RgenLib</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="DbsetDialog.resx">
-      <DependentUpon>DbsetDialog.cs</DependentUpon>
-    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>

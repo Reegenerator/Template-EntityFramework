@@ -1,0 +1,85 @@
+﻿<Window x:Class="Templates.DbsetDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:wtk="http://schemas.xceed.com/wpf/xaml/toolkit"
+            xmlns:templates="clr-namespace:Templates"
+            mc:Ignorable="d" 
+       
+            Width="500"
+        Height="300"
+             d:DesignHeight="300" d:DesignWidth="300">
+    <Window.Resources>
+        <SolidColorBrush x:Key="KeywordColor" >#2ab5e1</SolidColorBrush>
+        <SolidColorBrush x:Key="OperatorColor" >#fdac05</SolidColorBrush>
+        <DataTemplate x:Key="DbsetItemTemplate" DataType="templates:DbsetCandidate">
+
+            <TextBlock x:Name="MainText">
+                <Run Text="DbSet" Foreground="{StaticResource KeywordColor}"/><Run Text="&lt;"  Foreground="{StaticResource OperatorColor}"/><Run Text="{Binding Class.Name}"/><Run Text="&gt;" Foreground="{StaticResource OperatorColor}"/>
+                <Run Text="{Binding SetName}"/>
+            </TextBlock>
+
+        </DataTemplate>
+        <Style x:Key="DbsetItemContainerStyle" TargetType="wtk:SelectorItem">
+
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsAlreadyDefined}" Value="True">
+                    <Setter Property="Opacity" Value="0.5"/>
+                    <Setter  Property="ToolTip" Value="Already defined"/>
+                    <Setter  Property="ToolTipService.InitialShowDelay" Value="200"/>
+                    <Setter Property="IsEnabled" Value="False"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <DataTemplate x:Key="BaseclassTemplate">
+
+            <TextBlock>
+                <TextBlock Opacity="0.5" FontSize="10" Text="{Binding Namespace.FullName}"/>
+                <TextBlock Text="{Binding Name}"/>
+            </TextBlock>
+        </DataTemplate>
+        <Style x:Key="BaseclassItemContainerStyle" TargetType="wtk:SelectorItem">
+            <Setter Property="Template" Value="{StaticResource BaseclassTemplate}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsAlreadyDefined}" Value="True">
+                    <Setter Property="Opacity" Value="0.5"/>
+                    <Setter  Property="ToolTip" Value="Already defined"/>
+                    <Setter  Property="ToolTipService.InitialShowDelay" Value="200"/>
+                    <Setter Property="IsEnabled" Value="False"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+    </Window.Resources>
+    <Border Padding="10">
+        
+        <DockPanel>
+            <DockPanel DockPanel.Dock="Bottom">
+                <Button  x:Name="GenerateButton" DockPanel.Dock="Right" Click="GenerateButton_Click"
+                    HorizontalAlignment="Right" Margin="4 4 0 0" Height="30">
+                    Generate
+                </Button>
+            </DockPanel>
+          
+            <DockPanel >
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Margin="4">Filter by entity base class</TextBlock>
+                    <ListBox DockPanel.Dock="Left" MinWidth="100" x:Name="BaseclassCombo"
+                         SelectionChanged="BaseclassCombo_DropDownClosed" DisplayMemberPath="Name" />
+                </DockPanel>
+               
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Margin="4">Select DbSet property to generate</TextBlock>
+                    <wtk:CheckListBox x:Name="CandidateList" ItemTemplate="{StaticResource DbsetItemTemplate}"
+                                  ItemContainerStyle="{StaticResource DbsetItemContainerStyle}">
+
+                </wtk:CheckListBox> 
+                </DockPanel>
+                
+            </DockPanel>
+        
+        </DockPanel>
+    </Border>
+
+</Window>
