@@ -152,16 +152,6 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Attributes\Attributes.csproj">
-      <Project>{07c4ae0f-b6a5-45fc-982c-e4ec2c0b6661}</Project>
-      <Name>Attributes</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\RgenLib\RgenLib.csproj">
-      <Project>{fa884bb3-23d7-495c-a246-364fb3b2a478}</Project>
-      <Name>RgenLib</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
