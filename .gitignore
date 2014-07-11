@@ -155,3 +155,25 @@ $RECYCLE.BIN/
 # Mac desktop service store files
 .DS_Store
 /packages
+Templates/Old/DbSetDialog.resx
+Templates/PropertyNameEnum.Designer.cs
+Templates/PropertyNameEnum.rgt
+Templates/PropertyNameEnum.rgt.cs
+Test/App.config
+Test/Entities/Author.cs
+Test/Entities/Book.cs
+Test/Entities/Context.cs
+Test/Entities/CookBook.cs
+Test/Entities/EntityBase.cs
+Test/Entities/Publisher.cs
+Test/Form1.Designer.cs
+Test/Form1.cs
+Test/Person.cs
+Test/Program.cs
+Test/Properties/AssemblyInfo.cs
+Test/Properties/Resources.Designer.cs
+Test/Properties/Resources.resx
+Test/Properties/Settings.Designer.cs
+Test/Properties/Settings.settings
+Test/Test.csproj
+Test/packages.config
